@@ -145,7 +145,7 @@
         <h2>Book Your Ride</h2>
         <div class="form-container">
             <div id="successMessage" class="success-message hidden">
-                ✓ Booking submitted successfully! We'll contact you shortly to confirm your reservation.
+                ✓ Booking submitted successfully! Check your email for confirmation details.
             </div>
             <div id="errorMessage" class="error-message hidden">
                 ✗ There was an error submitting your booking. Please try again.
@@ -187,8 +187,13 @@
         <p>&copy; 2026 Boston Flat Rate Ride. All rights reserved.</p>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3.2.0/dist/email.min.js"></script>
     <script>
-        // Cache DOM references on page load
+        // Initialize EmailJS with your public key
+        // Sign up at: https://www.emailjs.com
+        // Replace 'YOUR_PUBLIC_KEY' with your actual EmailJS public key
+        emailjs.init('YOUR_PUBLIC_KEY');
+
         const bookingForm = document.getElementById('bookingForm');
         const successMsg = document.getElementById('successMessage');
         const errorMsg = document.getElementById('errorMessage');
@@ -218,51 +223,60 @@
                 notes: formData.get('notes')
             };
             
-            // Update UI for loading state using class
+            // Update UI for loading state
             submitBtn.disabled = true;
             submitBtn.textContent = 'Booking...';
             
-            // For now, simulate successful booking
-            // In production, replace this with actual backend API call
-            setTimeout(() => {
-                try {
-                    // Log booking data (in production, send to server)
-                    console.log('Booking submitted:', data);
-                    
-                    // Show success message
-                    errorMsg.classList.add('hidden');
-                    successMsg.classList.remove('hidden');
-                    
-                    // Reset form
-                    bookingForm.reset();
-                    
-                    // Reset button
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Book Now';
-                    
-                    // Clear any existing timeout before setting new one
-                    if (successMessageTimeout) {
-                        clearTimeout(successMessageTimeout);
-                    }
-                    
-                    // Hide success message after 5 seconds
-                    successMessageTimeout = setTimeout(() => {
-                        successMsg.classList.add('hidden');
-                    }, 5000);
-                    
-                } catch (error) {
-                    console.error('Error:', error);
-                    errorMsg.classList.remove('hidden');
-                    successMsg.classList.add('hidden');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Book Now';
-                } finally {
-                    isSubmitting = false;
+            // Send email using EmailJS
+            emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', {
+                to_email: data.email,
+                to_name: data.name,
+                customer_name: data.name,
+                customer_email: data.email,
+                customer_phone: data.phone,
+                pickup_location: data.pickup,
+                dropoff_location: data.dropoff,
+                date: data.date,
+                time: data.time,
+                passengers: data.passengers,
+                notes: data.notes
+            })
+            .then(function(response) {
+                console.log('Booking sent successfully:', response);
+                
+                // Show success message
+                errorMsg.classList.add('hidden');
+                successMsg.classList.remove('hidden');
+                
+                // Reset form
+                bookingForm.reset();
+                
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Book Now';
+                
+                // Clear any existing timeout before setting new one
+                if (successMessageTimeout) {
+                    clearTimeout(successMessageTimeout);
                 }
-            }, 500);
+                
+                // Hide success message after 5 seconds
+                successMessageTimeout = setTimeout(() => {
+                    successMsg.classList.add('hidden');
+                }, 5000);
+                
+                isSubmitting = false;
+            })
+            .catch(function(error) {
+                console.error('Error sending booking:', error);
+                errorMsg.classList.remove('hidden');
+                successMsg.classList.add('hidden');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Book Now';
+                isSubmitting = false;
+            });
         }
 
-        // Use addEventListener instead of inline onsubmit
         bookingForm.addEventListener('submit', handleSubmit);
     </script>
 </body>
